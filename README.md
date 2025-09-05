@@ -1,4 +1,4 @@
-# ECSR-New-Item-Notifier
+# ECSR New Item Notifier
 Sends you a message in telegram if new item was uploaded or already existing item was set ON SALE (it means you can catch booster early drop items without being a booster on their server!!!)
 
 
