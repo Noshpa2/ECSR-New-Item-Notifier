@@ -5,7 +5,8 @@ Sends you a message in telegram if new item was uploaded or already existing ite
 Usage:
 
 You need python-telegram-bot module with 13.15 version
-Install it by doing this: pip install python-telegram-bot==13.15 (in CMD)
+Install it by doing this: 
+pip install python-telegram-bot==13.15 (in CMD)
 
 After that you go to @BotFather in telegram and you make a bot.
 
