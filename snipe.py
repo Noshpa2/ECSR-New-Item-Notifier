@@ -3,14 +3,16 @@ import json
 import requests
 import time
 from datetime import datetime
-from telegram import Bot, ParseMode
+from telegram import Bot
+from telegram.constants import ParseMode
+import asyncio
 
 # CONFIG
-TELEGRAM_TOKEN = "TOKEN" # write your telegram bot token here in ID:TOKEN format
-TELEGRAM_CHAT_ID = "ID" # Your ACCOUNT ID. @GetAnyTelegramIdBot bot that can do it for you
+TELEGRAM_TOKEN = "TOKEN" # Enter the token from @BotFather bot in id:token format
+TELEGRAM_CHAT_ID = "ID" # Get it in @GetAnyTelegramIdBot bot (YOUR TELEGRAM ACCOUNT ID)
 CATEGORY = "Featured"
 LIMIT = 28
-LOOP_DELAY = 7  # seconds
+LOOP_DELAY = 5  # seconds
 SEEN_FILE = "seen_items.json"
 
 SEARCH_URL = f"https://ecsr.io/apisite/catalog/v1/search/items?category={CATEGORY}&limit={LIMIT}&sortType=0"
@@ -30,12 +32,13 @@ if os.path.exists(SEEN_FILE):
         except json.JSONDecodeError:
             seen_items = set()
 
+
 def get_session_and_csrf():
     session = requests.Session()
     session.headers.update(HEADERS)
 
     try:
-        resp = session.post(DETAILS_URL, json={"items":[]})
+        resp = session.post(DETAILS_URL, json={"items": []})
         resp.raise_for_status()
     except requests.HTTPError:
         pass
@@ -48,11 +51,13 @@ def get_session_and_csrf():
     session.headers["x-csrf-token"] = csrf_token
     return session, csrf_token
 
+
 def fetch_asset_ids(session):
     resp = session.get(SEARCH_URL)
     resp.raise_for_status()
     data = resp.json()
     return [{"itemType": item["itemType"], "id": item["id"]} for item in data["data"]]
+
 
 def fetch_item_details(session, items):
     if not items:
@@ -75,6 +80,7 @@ def fetch_item_details(session, items):
 
     resp.raise_for_status()
     return resp.json().get("data", [])
+
 
 def format_item_message(item):
     name = item["name"]
@@ -106,10 +112,16 @@ def format_item_message(item):
         f"{offsale_str}"
     )
 
-def send_telegram_message(bot, message):
-    bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message, parse_mode=ParseMode.MARKDOWN)
 
-def main():
+async def send_telegram_message(bot, message):
+    await bot.send_message(
+        chat_id=TELEGRAM_CHAT_ID,
+        text=message,
+        parse_mode=ParseMode.MARKDOWN,
+    )
+
+
+async def main():
     bot = Bot(token=TELEGRAM_TOKEN)
     session, csrf_token = get_session_and_csrf()
     if not session:
@@ -145,7 +157,7 @@ def main():
                 else:
                     for item in details:
                         msg = format_item_message(item)
-                        send_telegram_message(bot, msg)
+                        await send_telegram_message(bot, msg)
                         seen_items.add(item["id"])
                         with open(SEEN_FILE, "w") as f:
                             json.dump(list(seen_items), f)
@@ -156,7 +168,8 @@ def main():
         except Exception as e:
             print(f"❌ Unexpected error: {e}")
 
-        time.sleep(LOOP_DELAY)
+        await asyncio.sleep(LOOP_DELAY)
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
